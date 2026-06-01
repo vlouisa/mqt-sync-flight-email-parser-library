@@ -5,7 +5,9 @@
  * - canParse(rawText)
  * - parse(rawText)
  *
- * Output van parse() moet altijd een array zijn:
+ * Output van parse() is een array met flight candidates.
+ *
+ * Bestaande functionaliteit blijft ondersteund:
  *
  * [
  *   {
@@ -13,16 +15,45 @@
  *     departureDate: '2025-12-20'
  *   }
  * ]
+ *
+ * Nieuwe route/time fallback wordt ook ondersteund:
+ *
+ * [
+ *   {
+ *     departureDate: '2026-06-05',
+ *     departureTime: '10:10',
+ *     departureAirport: 'FCO',
+ *     arrivalAirport: 'BRU'
+ *   }
+ * ]
  */
 class BaseFlightEmailParser {
+  /**
+   * Controleert of deze parser geschikt is voor de e-mailtekst.
+   *
+   * @param {string} rawText Plain-text e-mailinhoud.
+   * @returns {boolean} True als deze parser de tekst kan verwerken.
+   */
   canParse(rawText) {
     return false;
   }
 
+  /**
+   * Parseert een e-mailtekst naar flight candidates.
+   *
+   * @param {string} rawText Plain-text e-mailinhoud.
+   * @returns {Object[]} Flight candidates.
+   */
   parse(rawText) {
     throw new Error('parse() moet worden geïmplementeerd door subclass.');
   }
 
+  /**
+   * Normaliseert ruwe e-mailtekst.
+   *
+   * @param {*} text Ruwe tekstwaarde.
+   * @returns {string} Genormaliseerde tekst.
+   */
   normalizeText(text) {
     return String(text || '')
       .replace(/\r/g, '\n')
@@ -32,12 +63,24 @@ class BaseFlightEmailParser {
       .trim();
   }
 
+  /**
+   * Normaliseert een vluchtnummer.
+   *
+   * @param {*} value Vluchtnummerwaarde.
+   * @returns {string} Genormaliseerd vluchtnummer.
+   */
   normalizeFlightNumber(value) {
     return String(value || '')
       .replace(/\s+/g, '')
       .toUpperCase();
   }
 
+  /**
+   * Normaliseert een datum naar yyyy-MM-dd.
+   *
+   * @param {*} value Datumwaarde.
+   * @returns {string} Datum in yyyy-MM-dd formaat, of leeg als onbekend.
+   */
   normalizeDate(value) {
     const raw = String(value || '').trim();
 
@@ -77,7 +120,6 @@ class BaseFlightEmailParser {
       }
     }
 
-
     match = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
 
     if (match) {
@@ -87,6 +129,44 @@ class BaseFlightEmailParser {
     return '';
   }
 
+  /**
+   * Normaliseert een tijd naar HH:mm.
+   *
+   * @param {*} value Tijdwaarde.
+   * @returns {string} Tijd in HH:mm formaat, of leeg als onbekend.
+   */
+  normalizeTime(value) {
+    const raw = String(value || '').trim();
+    const match = raw.match(/\b(\d{1,2}):(\d{2})\b/);
+
+    if (!match) {
+      return '';
+    }
+
+    return `${this.pad(match[1])}:${match[2]}`;
+  }
+
+  /**
+   * Normaliseert een IATA airport code.
+   *
+   * @param {*} value Airportwaarde.
+   * @returns {string} IATA-code, of leeg als onbekend.
+   */
+  normalizeAirportCode(value) {
+    const match = String(value || '')
+      .trim()
+      .toUpperCase()
+      .match(/\b[A-Z]{3}\b/);
+
+    return match ? match[0] : '';
+  }
+
+  /**
+   * Zet een maandnaam om naar een maandnummer.
+   *
+   * @param {*} value Maandnaam.
+   * @returns {number|string} Maandnummer of lege string.
+   */
   monthNameToNumber(value) {
     const key = String(value || '').toLowerCase();
 
@@ -141,36 +221,114 @@ class BaseFlightEmailParser {
     return months[key] || '';
   }
 
+  /**
+   * Voegt een voorloopnul toe aan een numerieke waarde.
+   *
+   * @param {*} value Waarde.
+   * @returns {string} Waarde met minimaal twee tekens.
+   */
   pad(value) {
     return String(value).padStart(2, '0');
   }
 
+  /**
+   * Verwijdert dubbele flight candidates.
+   *
+   * Backwards compatible:
+   * bestaande parsers die alleen flightNumber + departureDate teruggeven,
+   * blijven exact werken.
+   *
+   * Ondersteunt daarnaast route/time candidates zonder vluchtnummer.
+   *
+   * @param {Object[]} flights Parsed flight candidates.
+   * @returns {Object[]} Unieke en genormaliseerde flight candidates.
+   */
   dedupeFlights(flights) {
     const seen = {};
     const result = [];
 
     flights.forEach(flight => {
-      const flightNumber = this.normalizeFlightNumber(flight.flightNumber);
-      const departureDate = this.normalizeDate(flight.departureDate);
+      const normalizedFlight = this.normalizeFlightCandidate_(flight);
 
-      if (!flightNumber || !departureDate) {
+      if (!this.isValidFlightCandidate_(normalizedFlight)) {
         return;
       }
 
-      const key = `${flightNumber}_${departureDate}`;
+      const key = this.buildFlightCandidateKey_(normalizedFlight);
 
       if (seen[key]) {
         return;
       }
 
       seen[key] = true;
-
-      result.push({
-        flightNumber,
-        departureDate
-      });
+      result.push(normalizedFlight);
     });
 
     return result;
+  }
+
+  /**
+   * Normaliseert een flight candidate.
+   *
+   * @param {Object} flight Flight candidate.
+   * @returns {Object} Genormaliseerde flight candidate.
+   */
+  normalizeFlightCandidate_(flight) {
+    const flightNumber = this.normalizeFlightNumber(flight.flightNumber);
+    const departureDate = this.normalizeDate(flight.departureDate);
+    const departureTime = this.normalizeTime(flight.departureTime);
+
+    return {
+      flightNumber,
+      departureDate,
+      departureTime,
+      departureAirport: this.normalizeAirportCode(flight.departureAirport),
+      arrivalAirport: this.normalizeAirportCode(flight.arrivalAirport),
+      departureCity: String(flight.departureCity || '').trim(),
+      arrivalCity: String(flight.arrivalCity || '').trim(),
+      lookupStrategy: flight.lookupStrategy || (flightNumber ? 'FLIGHT_NUMBER' : 'ROUTE_TIME')
+    };
+  }
+
+  /**
+   * Controleert of een flight candidate bruikbaar is.
+   *
+   * Geldig wanneer:
+   * - flightNumber + departureDate aanwezig zijn; of
+   * - departureDate + departureTime + departureAirport + arrivalAirport aanwezig zijn.
+   *
+   * @param {Object} flight Genormaliseerde flight candidate.
+   * @returns {boolean} True als de candidate bruikbaar is.
+   */
+  isValidFlightCandidate_(flight) {
+    if (flight.flightNumber && flight.departureDate) {
+      return true;
+    }
+
+    return Boolean(
+      flight.departureDate &&
+      flight.departureTime &&
+      flight.departureAirport &&
+      flight.arrivalAirport
+    );
+  }
+
+  /**
+   * Bouwt een dedupe-key voor een flight candidate.
+   *
+   * @param {Object} flight Genormaliseerde flight candidate.
+   * @returns {string} Dedupe key.
+   */
+  buildFlightCandidateKey_(flight) {
+    if (flight.flightNumber) {
+      return `${flight.flightNumber}_${flight.departureDate}`;
+    }
+
+    return [
+      flight.departureAirport,
+      flight.arrivalAirport,
+      flight.departureDate,
+      flight.departureTime
+    ].join('_');
   }
 }

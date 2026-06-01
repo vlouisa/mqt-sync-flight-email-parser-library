@@ -35,12 +35,12 @@ function testFlightEmailParserServiceForFoundThreadIds() {
         subject: message.getSubject(),
         date: message.getDate(),
         success: false,
-        hotel: null,
+        flights: null,
         error: null
       };
 
       try {
-        item.hotel = FlightEmailParserService.parse(rawText);
+        item.flights = FlightEmailParserService.parse(rawText);
         item.success = true;
       } catch (error) {
         item.error = error && error.message ? error.message : String(error);
@@ -65,7 +65,7 @@ function testFlightEmailParserServiceForFoundThreadIds() {
  */
 function getThreadIdsForAllLabels() {
   const labelNames = [
-    'Flights/Processed',
+    'Flights/Inbox',
   ];
 
   const threadIds = {};
