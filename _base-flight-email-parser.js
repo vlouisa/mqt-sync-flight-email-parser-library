@@ -6,26 +6,6 @@
  * - parse(rawText)
  *
  * Output van parse() is een array met flight candidates.
- *
- * Bestaande functionaliteit blijft ondersteund:
- *
- * [
- *   {
- *     flightNumber: 'HV6036',
- *     departureDate: '2025-12-20'
- *   }
- * ]
- *
- * Nieuwe route/time fallback wordt ook ondersteund:
- *
- * [
- *   {
- *     departureDate: '2026-06-05',
- *     departureTime: '10:10',
- *     departureAirport: 'FCO',
- *     arrivalAirport: 'BRU'
- *   }
- * ]
  */
 class BaseFlightEmailParser {
   /**
@@ -49,6 +29,22 @@ class BaseFlightEmailParser {
   }
 
   /**
+   * Maakt ruwe mailtekst geschikt voor parsing.
+   *
+   * Decodeert base64 MIME-parts, verwijdert HTML en normaliseert whitespace.
+   *
+   * @param {*} rawText Ruwe e-mailtekst.
+   * @returns {string} Parsebare tekst.
+   */
+  prepareText(rawText) {
+    return this.normalizeText(
+      this.stripHtml_(
+        this.decodeBase64MimeParts_(rawText)
+      )
+    );
+  }
+
+  /**
    * Normaliseert ruwe e-mailtekst.
    *
    * @param {*} text Ruwe tekstwaarde.
@@ -58,9 +54,79 @@ class BaseFlightEmailParser {
     return String(text || '')
       .replace(/\r/g, '\n')
       .replace(/\u00a0/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
       .replace(/[ \t]+/g, ' ')
       .replace(/\n{2,}/g, '\n')
       .trim();
+  }
+
+  /**
+   * Decodeert base64 MIME-blokken uit een e-mail.
+   *
+   * Als er geen base64 MIME-blokken gevonden worden, wordt de originele tekst
+   * teruggegeven.
+   *
+   * @param {*} rawText Ruwe e-mailtekst.
+   * @returns {string} Tekst met gedecodeerde base64-inhoud.
+   * @private
+   */
+  decodeBase64MimeParts_(rawText) {
+    const text = String(rawText || '');
+
+    const matches = text.match(
+      /Content-Transfer-Encoding:\s*base64[\s\S]*?\r?\n\r?\n([A-Za-z0-9+/=\r\n]+)/gi
+    );
+
+    if (!matches) {
+      return text;
+    }
+
+    const decodedParts = matches
+      .map(part => this.decodeSingleBase64MimePart_(part))
+      .filter(Boolean);
+
+    return decodedParts.length > 0
+      ? decodedParts.join('\n')
+      : text;
+  }
+
+  /**
+   * Decodeert één base64 MIME-blok.
+   *
+   * @param {string} part MIME-blok.
+   * @returns {string} Gedecodeerde tekst of lege string.
+   * @private
+   */
+  decodeSingleBase64MimePart_(part) {
+    const body = String(part || '')
+      .replace(/Content-Transfer-Encoding:\s*base64/i, '')
+      .replace(/Content-Type:[^\n]+/gi, '')
+      .trim()
+      .replace(/\s+/g, '');
+
+    try {
+      return Utilities
+        .newBlob(Utilities.base64Decode(body))
+        .getDataAsString('UTF-8');
+    } catch (error) {
+      return '';
+    }
+  }
+
+  /**
+   * Verwijdert simpele HTML-tags uit tekst.
+   *
+   * @param {string} text Tekst.
+   * @returns {string} Tekst zonder HTML-tags.
+   * @private
+   */
+  stripHtml_(text) {
+    return String(text || '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<\/div>/gi, '\n')
+      .replace(/<[^>]+>/g, ' ');
   }
 
   /**
@@ -124,6 +190,16 @@ class BaseFlightEmailParser {
 
     if (match) {
       return `${match[3]}-${this.pad(match[2])}-${this.pad(match[1])}`;
+    }
+
+    match = raw.match(/^(?:[A-Z][a-z]{2},\s*)?(\d{1,2})\s+([A-Z][a-z]{2})\s+(\d{2})$/);
+
+    if (match) {
+      const month = this.monthNameToNumber(match[2]);
+
+      if (month) {
+        return `20${match[3]}-${this.pad(month)}-${this.pad(match[1])}`;
+      }
     }
 
     return '';
@@ -234,12 +310,6 @@ class BaseFlightEmailParser {
   /**
    * Verwijdert dubbele flight candidates.
    *
-   * Backwards compatible:
-   * bestaande parsers die alleen flightNumber + departureDate teruggeven,
-   * blijven exact werken.
-   *
-   * Ondersteunt daarnaast route/time candidates zonder vluchtnummer.
-   *
    * @param {Object[]} flights Parsed flight candidates.
    * @returns {Object[]} Unieke en genormaliseerde flight candidates.
    */
@@ -292,10 +362,6 @@ class BaseFlightEmailParser {
 
   /**
    * Controleert of een flight candidate bruikbaar is.
-   *
-   * Geldig wanneer:
-   * - flightNumber + departureDate aanwezig zijn; of
-   * - departureDate + departureTime + departureAirport + arrivalAirport aanwezig zijn.
    *
    * @param {Object} flight Genormaliseerde flight candidate.
    * @returns {boolean} True als de candidate bruikbaar is.
