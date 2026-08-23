@@ -45,7 +45,7 @@ class KlmFlightEmailParser extends BaseFlightEmailParser {
    */
   parseFlightBlocks_(text, flights) {
     const regex =
-      /(?:maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\s+(\d{1,2})\s+([a-z]+)\s+(\d{4})\s*-\s*(\d{1,2}:\d{2})[\s\S]{0,300}?\(([A-Z]{3})\)[\s\S]{0,200}?\b(KL\s?\d{3,4})\b[\s\S]{0,300}?(\d{1,2}:\d{2})[\s\S]{0,160}?\(([A-Z]{3})\)/gi;
+      /(?:maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\s+(\d{1,2})\s+([a-z]+)\s+(\d{4})\s*-\s*(\d{1,2}:\d{2})[\s\S]{0,300}?(?:\(|,\s*)([A-Z]{3})\)?[\s\S]{0,200}?\b(KL\s?\d{3,4})\b[\s\S]{0,400}?(\d{1,2}:\d{2})[\s\S]{0,200}?(?:\(|,\s*)([A-Z]{3})\)?/gi;
 
     let match;
 
