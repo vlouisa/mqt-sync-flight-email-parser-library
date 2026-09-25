@@ -9,17 +9,17 @@ const klmFixtures = {
 
 // Expliciete laadvolgorde; test/integration/ met echte Gmail-toegang wordt niet geladen.
 const sources = [
-  '_base-flight-email-parser.js',
-  'klm-flight-email-parser.js',
-  'transavia-flight-email-parser.js',
-  'ita-airways-flight-email-parser.js',
-  'brussels-airlines-flight-email-parser.js',
-  'easy-jet-flight-email-parser.js',
-  'ryanair-flight-email-parser.js',
-  'euro-wings-flight-email-parser.js',
-  'flight-parser-error.js',
-  'config.js',
-  'flight-email-parser-service.js',
+  'src/parsers/_base-flight-email-parser.js',
+  'src/parsers/klm-flight-email-parser.js',
+  'src/parsers/transavia-flight-email-parser.js',
+  'src/parsers/ita-airways-flight-email-parser.js',
+  'src/parsers/brussels-airlines-flight-email-parser.js',
+  'src/parsers/easy-jet-flight-email-parser.js',
+  'src/parsers/ryanair-flight-email-parser.js',
+  'src/parsers/euro-wings-flight-email-parser.js',
+  'src/flight-parser-error.js',
+  'src/config.js',
+  'src/flight-email-parser-service.js',
   'test/helpers/assert-util.js',
   'test/unit/flight-parser-tests.js'
 ];
@@ -46,8 +46,8 @@ module.exports = [{
 }, {
   name: 'klm-mail-fixtures',
   sources: [
-    '_base-flight-email-parser.js',
-    'klm-flight-email-parser.js',
+    'src/parsers/_base-flight-email-parser.js',
+    'src/parsers/klm-flight-email-parser.js',
     'test/helpers/assert-util.js',
     'test/unit/klm-flight-email-parser-tests.js'
   ],

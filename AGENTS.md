@@ -4,11 +4,11 @@
 
 Dit project is een Google Apps Script-library voor het uitlezen van vluchtgegevens uit boekingsmails. De runtime is Apps Script V8; bestanden delen een globale scope en gebruiken geen imports of exports.
 
-- `flight-email-parser-service.js`: publiek toegangspunt `FlightEmailParserService.parse(rawText)` en selectie van de eerste passende parser.
-- `_base-flight-email-parser.js`: gedeelde tekstverwerking, normalisatie, validatie en deduplicatie.
-- `config.js`: registratie van parsers via factories.
-- `*-flight-email-parser.js`: maatschappijgebonden herkenning en extractie voor KLM, Transavia, ITA Airways, Brussels Airlines, easyJet, Ryanair en Eurowings.
-- `flight-parser-error.js`: specifieke fout voor parsing zonder gevonden vluchten.
+- `src/flight-email-parser-service.js`: publiek toegangspunt `FlightEmailParserService.parse(rawText)` en selectie van de eerste passende parser.
+- `src/parsers/_base-flight-email-parser.js`: gedeelde tekstverwerking, normalisatie, validatie en deduplicatie.
+- `src/config.js`: registratie van parsers via factories.
+- `src/parsers/*-flight-email-parser.js`: maatschappijgebonden herkenning en extractie voor KLM, Transavia, ITA Airways, Brussels Airlines, easyJet, Ryanair en Eurowings.
+- `src/flight-parser-error.js`: specifieke fout voor parsing zonder gevonden vluchten.
 - `test/integration/flight-email-parser-service-tests.js`: handmatige integratiecontrole met Gmail-berichten onder het label `Flights/Inbox`.
 - `test/unit/` en `test/helpers/`: lokale unit-tests met synthetische mailfragmenten en gedeelde assertions.
 - `scripts/unit-test-suites.cjs`: expliciete testselectie en laadvolgorde voor de centrale testrunner.
@@ -88,7 +88,7 @@ Rapporteer na uitvoering de gebruikte commit message en het resultaat van de com
 ## Verificatie
 
 - Gebruik de centrale runner uit `../mqt-test-runner` via de lokale npm-development dependency. Zorg dat deze naastliggende map aanwezig is en een Node.js-versie beschikbaar is die voldoet aan `engines.node` in `package.json` (inclusief de eisen van c8); installeer met `npm ci` en voer tests uit met `npm run test:unit`. Er is geen CI-configuratie ingericht.
-- Voer `npm run test:coverage` uit voor coverage via c8. De configuratie in `package.json` meet alle productie-JavaScriptbestanden in de projectroot en sluit tests en tooling uit. Het HTML-rapport staat in `coverage/index.html`; daarnaast verschijnen terminal- en JSON-rapporten. Coverage meet uitvoering, niet de correctheid of volledigheid van ondersteunde mailvarianten.
+- Voer `npm run test:coverage` uit voor coverage via c8. De configuratie in `package.json` meet alle productie-JavaScriptbestanden onder `src/` en sluit tests en tooling uit. Het HTML-rapport staat in `coverage/index.html`; daarnaast verschijnen terminal- en JSON-rapporten. Coverage meet uitvoering, niet de correctheid of volledigheid van ondersteunde mailvarianten.
 - Houd suites expliciet geselecteerd in `scripts/unit-test-suites.cjs`. Iedere synchrone test draait in een nieuwe VM-context zonder echte Google-services of Node-API's. Fixtures, assertions en eventuele mocks blijven in deze repository; de runner is geen beveiligingssandbox voor onbekende code.
 - De tests controleren basisgevallen voor alle zeven maatschappijen, route/tijdherkenning, retourvluchten, deduplicatie, datumformaten en foutafhandeling. Dit is geen volledige regressiedekking van alle mailvarianten of bekende aandachtspunten.
 - Laad `test/integration/` niet in de lokale suites. Houd `test/unit/`, `test/helpers/`, `scripts/`, npm-bestanden, `node_modules/` en coverage buiten clasp-uploads via `.claspignore`; controleer de selectie bij wijzigingen met `clasp status`. De handmatige controles onder `test/integration/` worden wel naar Apps Script meegenomen.
