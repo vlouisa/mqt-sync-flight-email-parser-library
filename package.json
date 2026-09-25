@@ -1,0 +1,34 @@
+{
+  "name": "mqt-sync-flight-email-parser-library",
+  "private": true,
+  "scripts": {
+    "test:unit": "mqt-test --config scripts/unit-test-suites.cjs",
+    "test:coverage": "c8 mqt-test --config scripts/unit-test-suites.cjs"
+  },
+  "c8": {
+    "all": true,
+    "include": [
+      "*.js"
+    ],
+    "exclude": [
+      "test/**",
+      "scripts/**",
+      "node_modules/**",
+      "coverage/**"
+    ],
+    "reporter": [
+      "text",
+      "html",
+      "json-summary",
+      "json"
+    ],
+    "reports-dir": "coverage"
+  },
+  "engines": {
+    "node": "^20.19.0 || ^22.12.0 || >=23"
+  },
+  "devDependencies": {
+    "c8": "^12.0.0",
+    "mqt-test-runner": "file:../mqt-test-runner"
+  }
+}

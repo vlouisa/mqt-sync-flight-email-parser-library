@@ -1,5 +1,5 @@
 /**
- * Test de FlightEmailParserService op alle gevonden vlucht-thread IDs.
+ * Handmatige Gmail-integratiecontrole van FlightEmailParserService.
  *
  * @returns {Object[]} Testresultaten per e-mailbericht.
  */

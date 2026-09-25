@@ -1,0 +1,12 @@
+**/.git/**
+**/node_modules/**
+scripts/**
+test/unit/**
+test/helpers/**
+package.json
+package-lock.json
+npm-shrinkwrap.json
+coverage/**
+AGENTS.md
+README.md
+.gitignore

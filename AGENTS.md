@@ -9,7 +9,10 @@ Dit project is een Google Apps Script-library voor het uitlezen van vluchtgegeve
 - `config.js`: registratie van parsers via factories.
 - `*-flight-email-parser.js`: maatschappijgebonden herkenning en extractie voor KLM, Transavia, ITA Airways, Brussels Airlines, easyJet, Ryanair en Eurowings.
 - `flight-parser-error.js`: specifieke fout voor parsing zonder gevonden vluchten.
-- `tests.js`: handmatige integratiecontrole met Gmail-berichten onder het label `Flights/Inbox`.
+- `test/integration/flight-email-parser-service-tests.js`: handmatige integratiecontrole met Gmail-berichten onder het label `Flights/Inbox`.
+- `test/unit/` en `test/helpers/`: lokale unit-tests met synthetische mailfragmenten en gedeelde assertions.
+- `scripts/unit-test-suites.cjs`: expliciete testselectie en laadvolgorde voor de centrale testrunner.
+- `package.json` en `package-lock.json`: lokale development dependency op `../mqt-test-runner` en het commando `npm run test:unit`.
 - `appsscript.json` en `.clasp.json`: runtime- en deploymentconfiguratie.
 
 ## Aanpak
@@ -84,8 +87,13 @@ Rapporteer na uitvoering de gebruikte commit message en het resultaat van de com
 
 ## Verificatie
 
-- Er is momenteel geen lokale test runner, packageconfiguratie of CI-configuratie. Neem niet aan dat `npm test` beschikbaar is.
-- `tests.js` gebruikt `GmailApp` en echte mailboxinhoud. Deze controle rapporteert of parsing slaagt, maar vergelijkt de gevonden velden niet met verwachte waarden.
+- Gebruik de centrale runner uit `../mqt-test-runner` via de lokale npm-development dependency. Zorg dat deze naastliggende map aanwezig is en een Node.js-versie beschikbaar is die voldoet aan `engines.node` in `package.json` (inclusief de eisen van c8); installeer met `npm ci` en voer tests uit met `npm run test:unit`. Er is geen CI-configuratie ingericht.
+- Voer `npm run test:coverage` uit voor coverage via c8. De configuratie in `package.json` meet alle productie-JavaScriptbestanden in de projectroot en sluit tests en tooling uit. Het HTML-rapport staat in `coverage/index.html`; daarnaast verschijnen terminal- en JSON-rapporten. Coverage meet uitvoering, niet de correctheid of volledigheid van ondersteunde mailvarianten.
+- Houd suites expliciet geselecteerd in `scripts/unit-test-suites.cjs`. Iedere synchrone test draait in een nieuwe VM-context zonder echte Google-services of Node-API's. Fixtures, assertions en eventuele mocks blijven in deze repository; de runner is geen beveiligingssandbox voor onbekende code.
+- De tests controleren basisgevallen voor alle zeven maatschappijen, route/tijdherkenning, retourvluchten, deduplicatie, datumformaten en foutafhandeling. Dit is geen volledige regressiedekking van alle mailvarianten of bekende aandachtspunten.
+- Laad `test/integration/` niet in de lokale suites. Houd `test/unit/`, `test/helpers/`, `scripts/`, npm-bestanden, `node_modules/` en coverage buiten clasp-uploads via `.claspignore`; controleer de selectie bij wijzigingen met `clasp status`. De handmatige controles onder `test/integration/` worden wel naar Apps Script meegenomen.
+- De lokale npm-link gebruikt direct de gedeelde runnerbroncode. Wijzigingen aan die runner kunnen ook andere aangesloten projecten raken; behandel runnerwijzigingen als een aparte taak.
+- `test/integration/flight-email-parser-service-tests.js` gebruikt `GmailApp` en echte mailboxinhoud. Deze controle rapporteert of parsing slaagt, maar vergelijkt de gevonden velden niet met verwachte waarden.
 - Gebruik bij parserwijzigingen bij voorkeur kleine synthetische of geanonimiseerde fixtures met expliciete verwachte resultaten. Controleer ook relevante negatieve gevallen en meerdere vluchtsegmenten.
 - Controleer bij wijzigingen aan de basisklasse de gevolgen voor alle betrokken maatschappijen.
 - Een lokale JavaScript-controle vereist een beschikbare runtime en zo nodig stubs voor Apps Script-services zoals `Utilities`. Vermeld dat zo'n controle geen Apps Script-integratietest is.
