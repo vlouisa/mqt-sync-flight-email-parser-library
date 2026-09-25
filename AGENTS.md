@@ -17,10 +17,14 @@ Dit project is een Google Apps Script-library voor het uitlezen van vluchtgegeve
 - Lees de betrokken parser en de gedeelde basis voordat je wijzigingen maakt.
 - Houd wijzigingen gericht op de opdracht. Voer geen brede refactor of gedragswijziging uit zonder aanleiding.
 - Behoud Apps Script-compatibiliteit. Introduceer geen Node.js-afhankelijkheden, module-exports of buildstap in productiecode zonder expliciete noodzaak.
+- Ga er niet vanuit dat Node.js- of browser-API's beschikbaar zijn in Apps Script. Mappen vormen geen JavaScript-namespaces; voorkom conflicterende globale namen.
 - Volg de bestaande stijl: twee spaties inspringing, enkele aanhalingstekens en Nederlandse JSDoc-toelichting waar die helpt.
+- Beschrijf in JSDoc de parameters, uitvoer en relevante foutvoorwaarden. Houd voor publieke entrypoints zoals `FlightEmailParserService.parse` ook de geretourneerde velden en mogelijke fouten actueel.
 - Houd maatschappijgebonden patronen in de betreffende parser; plaats algemeen bruikbare normalisatie in de basisklasse.
+- Behandel verschillen tussen parsers niet automatisch als fouten: mailformaten verschillen per maatschappij. Deel logica alleen wanneer het bedoelde gedrag daadwerkelijk overeenkomt.
 - Registreer nieuwe parsers in `CONFIG.flightEmailParsers`. Controleer daarbij het effect van de volgorde: de dispatcher kiest momenteel de eerste match.
 - Controleer bij niet-triviale wijzigingen ook callers, configuratie, tests en externe effecten. Baseer conclusies op de implementatie, niet uitsluitend op comments.
+- Beschrijf bij grotere wijzigingen vooraf kort de kleinste passende aanpak en de impact op publieke contracten, parserselectie, normalisatie en deduplicatie waar relevant. Dit introduceert geen extra goedkeuringsstap voor al opgedragen werk.
 - Behoud publieke en globale namen. Controleer vóór hernoemen ook stringreferenties en externe aanroepers.
 - Gebruik Engelse identifiers, `camelCase` voor functies en variabelen, `PascalCase` voor klassen en een afsluitende `_` voor interne helpers waar de bestaande code dit doet. Vermijd formatting-only wijzigingen buiten de taak.
 
@@ -74,6 +78,7 @@ Rapporteer na uitvoering de gebruikte commit message en het resultaat van de com
 - `../mqt-gig-sync-app` gebruikt deze library via `Flight.FlightEmailParserService.parse(rawText)`. Inspecteer bij contractwijzigingen de actuele callers en het manifest van die repository wanneer beschikbaar.
 - Houd mailparsing in deze library. Gmail-import, providerlookups, Sheets- en Calendar-verwerking horen bij de aanroepende applicatie.
 - Controleer bij wijzigingen aan velden, foutafhandeling, normalisatie of duplicaatdetectie ook de aannames van de aanroepende applicatie. Wijzig die applicatie niet automatisch als onderdeel van een librarywijziging.
+- Benoem expliciet welke aannames over externe aanroepers niet konden worden geverifieerd, bijvoorbeeld als de Gig Sync-repository ontbreekt. Presenteer compatibiliteit dan niet als gecontroleerd.
 - Controleer bij publicatie of de aanroepende applicatie de library in development mode gebruikt; een push kan dan direct invloed hebben op die applicatie. Beschrijf die impact bij de release.
 - Behandel vertrekdatum en vertrektijd als de kalenderdatum en kloktijd uit de mail. Introduceer geen impliciete UTC-conversie of nieuwe tijdzonestrategie in een niet-gerelateerde wijziging.
 
@@ -85,6 +90,7 @@ Rapporteer na uitvoering de gebruikte commit message en het resultaat van de com
 - Controleer bij wijzigingen aan de basisklasse de gevolgen voor alle betrokken maatschappijen.
 - Een lokale JavaScript-controle vereist een beschikbare runtime en zo nodig stubs voor Apps Script-services zoals `Utilities`. Vermeld dat zo'n controle geen Apps Script-integratietest is.
 - Rapporteer welke controles daadwerkelijk zijn uitgevoerd en welke niet konden worden uitgevoerd. Claim geen geslaagde test op basis van alleen code-inspectie.
+- Vermeld bij afronding de gewijzigde bestanden en het gewijzigde gedrag, de uitgevoerde verificatie, resterende beperkingen en relevante risico's. Benoem eventuele nog benodigde handmatige verificatie; houd de rapportage passend bij de omvang van de wijziging.
 - Gebruik geen echte persoonsgegevens of volledige boekingsmails in nieuwe fixtures, logs of documentatie.
 - Inspecteer tests en diagnostische helpers vóór uitvoering op externe afhankelijkheden en side effects. Een naam met `test` garandeert niet dat een functie veilig is.
 - Voer tests die echte gegevens of externe services wijzigen alleen uit met expliciete toestemming die deze effecten omvat. De huidige Gmail-controle leest berichten en logt metadata; behandel die uitvoer als persoonsgegevens.
