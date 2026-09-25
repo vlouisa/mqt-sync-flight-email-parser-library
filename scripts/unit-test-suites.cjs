@@ -1,3 +1,12 @@
+const fs = require('node:fs');
+const path = require('node:path');
+
+// Alleen tekstwaarden worden aan de VM doorgegeven, geen bestandstoegang.
+const klmFixtures = {
+  booking: fs.readFileSync(path.join(__dirname, '../test/fixtures/klm-booking-1.txt'), 'utf8'),
+  ticket: fs.readFileSync(path.join(__dirname, '../test/fixtures/klm-booking-2.txt'), 'utf8')
+};
+
 // Expliciete laadvolgorde; test/integration/ met echte Gmail-toegang wordt niet geladen.
 const sources = [
   '_base-flight-email-parser.js',
@@ -34,4 +43,14 @@ module.exports = [{
     'testDateFormats',
     'testMissingCandidateFields'
   ]
+}, {
+  name: 'klm-mail-fixtures',
+  sources: [
+    '_base-flight-email-parser.js',
+    'klm-flight-email-parser.js',
+    'test/helpers/assert-util.js',
+    'test/unit/klm-flight-email-parser-tests.js'
+  ],
+  setup: `const KLM_FIXTURES = ${JSON.stringify(klmFixtures)};`,
+  tests: ['testKlmBookingReturnFlights', 'testKlmTicketCommaSeparatedAirports']
 }];

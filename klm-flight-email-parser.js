@@ -44,8 +44,9 @@ class KlmFlightEmailParser extends BaseFlightEmailParser {
    * @returns {void}
    */
   parseFlightBlocks_(text, flights) {
+    // De woordgrens na de IATA-code voorkomt matches op Fiu(micino) en Sch(iphol).
     const regex =
-      /(?:maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\s+(\d{1,2})\s+([a-z]+)\s+(\d{4})\s*-\s*(\d{1,2}:\d{2})[\s\S]{0,300}?(?:\(|,\s*)([A-Z]{3})\)?[\s\S]{0,200}?\b(KL\s?\d{3,4})\b[\s\S]{0,400}?(\d{1,2}:\d{2})[\s\S]{0,200}?(?:\(|,\s*)([A-Z]{3})\)?/gi;
+      /(?:maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\s+(\d{1,2})\s+([a-z]+)\s+(\d{4})\s*-\s*(\d{1,2}:\d{2})[\s\S]{0,300}?(?:\(|,\s*)([A-Z]{3})\b\)?[\s\S]{0,200}?\b(KL\s?\d{3,4})\b[\s\S]{0,400}?(\d{1,2}:\d{2})[\s\S]{0,200}?(?:\(|,\s*)([A-Z]{3})\b\)?/gi;
 
     let match;
 

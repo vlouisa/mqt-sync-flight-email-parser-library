@@ -3,6 +3,7 @@
 scripts/**
 test/unit/**
 test/helpers/**
+test/fixtures/**
 package.json
 package-lock.json
 npm-shrinkwrap.json

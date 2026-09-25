@@ -108,7 +108,6 @@ Rapporteer na uitvoering de gebruikte commit message en het resultaat van de com
 
 Deze punten beschrijven de huidige implementatie; het zijn geen eisen om dit gedrag te behouden of om alles bij iedere opdracht te repareren.
 
-- De KLM-regex kan de eerste drie letters van een luchthavennaam als IATA-code lezen, bijvoorbeeld `Fiu` uit `Fiumicino` in plaats van `FCO`.
 - Brede maatschappijherkenning en selectie van de eerste match kunnen de verkeerde parser kiezen; de service probeert na een leeg resultaat geen volgende parser.
 - Parsers kappen resultaten af met `slice`, waardoor extra segmenten zonder melding verdwijnen.
 - Base64-verwerking selecteert geen MIME-inhoudstype en kan niet-gecodeerde mailtekst verdringen. Niet alle parsers gebruiken dezelfde tekstvoorbereiding.
